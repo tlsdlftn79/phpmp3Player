@@ -1,7 +1,16 @@
-﻿<?php
+<?php
 // MP3 파일 경로를 저장한 배열 생성
-$music_files = glob('./music/*.mp3');
+$music_dir = './music/';
+$music_files = glob($music_dir . '*.mp3');
 $music_per_page = 10;
+
+// 검색어가 있을 시 파일 필터링
+if(isset($_GET['search']) && $_GET['search'] !== ''){
+    $search = $_GET['search'];
+    $searched_music_files = glob($music_dir . '*'.$search.'*.mp3');
+    $music_files = !empty($searched_music_files) ? $searched_music_files : [];
+}
+
 $page = isset($_GET['page']) ? $_GET['page'] : 1;
 $start = ($page - 1) * $music_per_page;
 $end = $start + $music_per_page;
@@ -65,7 +74,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
     <h1>MP3 플레이어</h1>
-    <!-- MP3 음악 파일 목록을 표시 할 리스트 생성 -->
+    
+    <!-- MP3 파일 검색 -->
+    <form method="get" action="">
+        <input type="text" name="search" placeholder="노래 제목 검색" value="<?php echo isset($_GET['search']) ? $_GET['search'] : ''; ?>">
+        <input type="submit" value="검색">
+    </form>
+    
+    <!-- MP3 음악 파일 목록을 표시할 리스트 생성 -->
     <ul id="music-list">
         <!-- PHP에서 생성한 MP3 파일 리스트 추가 -->
         <?php
@@ -73,7 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (isset($music_files[$i])) {
                 $music = $music_files[$i];
                 $music_name = basename($music, '.mp3');
-                echo "<li><a href='#' onclick=\"javascript:play_music('$music')\">$music_name</a></li>";
+                echo "<li><a href='#' onclick=\"javascript:play_music('$music')\">" . htmlspecialchars($music_name) . "</a></li>";
             }
         }
         ?>
@@ -93,7 +109,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($i == $page) {
                 echo " <strong>{$i}</strong>";
             } else {
-                echo " <a href=\"?page={$i}\">{$i}</a>";
+                echo " <a href=\"?page={$i}" .
+                        (!empty($search) ? "&search={$search}" : '') . 
+                        "\">{$i}</a>";
             }
         }
         echo "</div>";
